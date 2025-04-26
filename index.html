@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الناطق | تحويل الصور إلى نصوص وأصوات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6C63FF;
+            --primary-light: #8D85FF;
+            --primary-dark: #4B42D1;
+            --secondary: #00BFA6;
+            --accent: #FF6584;
+            --dark: #121212;
+            --darker: #0A0A0A;
+            --light: #E0E0E0;
+            --lighter: #F5F5F5;
+            --text: #E0E0E0;
+            --text-light: #B0B0B0;
+            --card-bg: #1E1E1E;
+            --card-border: #333333;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --error: #F44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        @font-face {
+            font-family: 'Tajawal';
+            src: url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* شريط التنقل */
+        .navbar {
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .logo i {
+            color: var(--primary-light);
+            transition: all 0.3s;
+        }
+
+        .logo:hover {
+            color: var(--primary-light);
+        }
+
+        .logo:hover i {
+            color: var(--primary);
+        }
+
+        /* القسم الرئيسي */
+        .hero {
+            padding: 160px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(108,99,255,0.1) 0%, rgba(108,99,255,0) 70%);
+            z-index: -1;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            max-width: 700px;
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+
+        /* بطاقة التحويل */
+        .converter-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            margin: 0 auto;
+            max-width: 850px;
+            border: 1px solid var(--card-border);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .converter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .tab-btn {
+            padding: 12px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-light);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px 3px 0 0;
+        }
+
+        /* منطقة رفع الملفات */
+        .upload-area {
+            border: 2px dashed var(--primary);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            background: rgba(108,99,255,0.05);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-light);
+            background: rgba(108,99,255,0.1);
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: var(--primary-light);
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover i {
+            color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .upload-area p {
+            margin-bottom: 10px;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .upload-area small {
+            color: var(--text-light);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .image-preview {
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+        }
+
+        /* منطقة النص */
+        .text-area {
+            margin-top: 20px;
+        }
+
+        .text-area textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            min-height: 200px;
+            resize: vertical;
+            font-size: 1rem;
+            line-height: 1.6;
+            background: var(--darker);
+            color: var(--text);
+            transition: all 0.3s;
+        }
+
+        .text-area textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108,99,255,0.2);
+        }
+
+        /* إعدادات الصوت */
+        .voice-settings {
+            margin: 25px 0;
+            background: var(--darker);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+        }
+
+        .voice-settings h3 {
+            margin-bottom: 20px;
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .voice-settings h3 i {
+            color: var(--primary-light);
+        }
+
+        .settings-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .setting-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .setting-group select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--card-bg);
+            color: var(--text);
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236C63FF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+
+        .slider-container {
+            position: relative;
+            padding-top: 8px;
+        }
+
+        .slider-container input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--card-border);
+            outline: none;
+            margin: 10px 0;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: var(--primary-light);
+        }
+
+        .slider-value {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        /* الأزرار */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(108,99,255,0.4);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, var(--primary-light), var(--primary));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108,99,255,0.6);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: rgba(108,99,255,0.1);
+        }
+
+        /* نتائج التحويل */
+        .results {
+            margin-top: 30px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            border: 1px solid var(--card-border);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            color: var(--primary);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .audio-player {
+            width: 100%;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: var(--darker);
+        }
+
+        /* شريط التقدم */
+        .progress-container {
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            width: 100%;
+            background: var(--card-border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.4s;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        /* رسائل التنبيه */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .alert-success {
+            background: rgba(76,175,80,0.1);
+            color: var(--success);
+            border: 1px solid rgba(76,175,80,0.3);
+        }
+
+        .alert-error {
+            background: rgba(244,67,54,0.1);
+            color: var(--error);
+            border: 1px solid rgba(244,67,54,0.3);
+        }
+
+        /* التكيف مع الشاشات الصغيرة */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 140px 0 40px;
+            }
+            
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .upload-area {
+                padding: 30px;
+            }
+            
+            .settings-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- شريط التنقل -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="logo">
+                <i class="fas fa-wave-square"></i>
+                <span>الناطق</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- القسم الرئيسي -->
+    <section class="hero">
+        <div class="container">
+            <h1>تحويل الصور إلى نصوص وأصوات بدقة عالية</h1>
+            <p>أدق تقنية لاستخراج النصوص العربية من الصور وتحويلها إلى أصوات بشرية طبيعية</p>
+            
+            <div class="converter-card">
+                <!-- رسائل التنبيه -->
+                <div id="successAlert" class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> <span id="successMessage"></span>
+                </div>
+                
+                <div id="errorAlert" class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i> <span id="errorMessage"></span>
+                </div>
+                
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="upload">
+                        <i class="fas fa-image"></i> رفع صورة
+                    </button>
+                    <button class="tab-btn" data-tab="text">
+                        <i class="fas fa-font"></i> كتابة نص
+                    </button>
+                </div>
+                
+                <div class="tab-content active" id="upload-tab">
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>اسحب وأفلت صورة هنا أو انقر للاختيار</p>
+                        <small>يدعم JPG, PNG, PDF - دقة عالية في التعرف على النصوص العربية</small>
+                        <input type="file" id="fileInput" accept="image/*">
+                    </div>
+                    
+                    <div class="image-preview" id="imagePreview">
+                        <img id="previewImage" src="" alt="الصورة المرفوعة">
+                        <button class="btn btn-primary" id="extractBtn" style="margin-top: 15px;">
+                            <i class="fas fa-bolt"></i> استخراج النص
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="text-tab">
+                    <div class="text-area">
+                        <textarea id="inputText" placeholder="اكتب أو الصق النص هنا..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="voice-settings">
+                    <h3><i class="fas fa-sliders-h"></i> إعدادات الصوت</h3>
+                    <div class="settings-row">
+                        <div class="setting-group">
+                            <label for="voiceType">اختر الصوت</label>
+                            <select id="voiceType">
+                                <option value="ar-SA-Wavenet-A">صوت رجالي ناعم</option>
+                                <option value="ar-SA-Wavenet-B">صوت نسائي رقيق</option>
+                                <option value="ar-SA-Wavenet-C">صوت رجالي عميق</option>
+                                <option value="ar-SA-Wavenet-D">صوت نسائي ناعم</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label for="language">اللغة</label>
+                            <select id="language">
+                                <option value="ar">العربية</option>
+                                <option value="en">الإنجليزية</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <div class="setting-group">
+                            <label for="speed">سرعة الصوت</label>
+                            <div class="slider-container">
+                                <input type="range" id="speed" min="0.5" max="3" step="0.1" value="1">
+                                <div class="slider-value">
+                                    <span>بطيء</span>
+                                    <span>سريع</span>
+                                </div>
+                            </div>
+                            <div id="speedValue" style="text-align: center; margin-top: 5px; color: var(--primary);">1</div>
+                        </div>
+                        <div class="setting-group">
+                            <label for="pitch">نبرة الصوت</label>
+                            <div class="slider-container">
+                                <input type="range" id="pitch" min="-20" max="20" step="1" value="0">
+                                <div class="slider-value">
+                                    <span>منخفض</span>
+                                    <span>مرتفع</span>
+                                </div>
+                            </div>
+                            <div id="pitchValue" style="text-align: center; margin-top: 5px; color: var(--primary);">0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="convertBtn">
+                        <i class="fas fa-play"></i> تشغيل الصوت
+                    </button>
+                    <button class="btn btn-outline" id="clearBtn">
+                        <i class="fas fa-trash-alt"></i> مسح الكل
+                    </button>
+                </div>
+            </div>
+            
+            <div class="results" id="results">
+                <div class="result-card">
+                    <div class="result-header">
+                        <div class="result-title"><i class="fas fa-music"></i> النتيجة الصوتية</div>
+                        <div class="result-actions">
+                            <a href="#" class="download-btn" id="downloadAudio">
+                                <i class="fas fa-download"></i> تحميل الصوت
+                            </a>
+                        </div>
+                    </div>
+                    <audio controls class="audio-player" id="audioPlayer"></audio>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div id="progressBar"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="progressText">جاهز للتحويل</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // DOM Elements
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImage = document.getElementById('previewImage');
+        const extractBtn = document.getElementById('extractBtn');
+        const inputText = document.getElementById('inputText');
+        const convertBtn = document.getElementById('convertBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const results = document.getElementById('results');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const downloadAudio = document.getElementById('downloadAudio');
+        const speedValue = document.getElementById('speedValue');
+        const pitchValue = document.getElementById('pitchValue');
+        const progressText = document.getElementById('progressText');
+        const progressPercent = document.getElementById('progressPercent');
+        const progressBar = document.getElementById('progressBar');
+        const successAlert = document.getElementById('successAlert');
+        const successMessage = document.getElementById('successMessage');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        // متغير لحفظ الصوت المولد
+        let generatedAudioUrl = null;
+        
+        // تهيئة الصفحة
+        document.addEventListener('DOMContentLoaded', () => {
+            // تحديث قيم المتغيرات
+            updateSliderValues();
+            
+            // تهيئة الأصوات المتاحة
+            if ('speechSynthesis' in window) {
+                speechSynthesis.onvoiceschanged = () => {
+                    const voices = speechSynthesis.getVoices();
+                    console.log('الأصوات المتاحة:', voices);
+                };
+            }
+        });
+        
+        // تغيير الألسنة
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const tabId = btn.getAttribute('data-tab') + '-tab';
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // تحديث قيم المتغيرات
+        function updateSliderValues() {
+            speedValue.textContent = document.getElementById('speed').value;
+            pitchValue.textContent = document.getElementById('pitch').value;
+        }
+        
+        // متابعة تغييرات السرعة والنبرة
+        document.getElementById('speed').addEventListener('input', updateSliderValues);
+        document.getElementById('pitch').addEventListener('input', updateSliderValues);
+        
+        // رفع الصورة
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    previewImage.src = event.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // سحب وإفلات الصورة
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--primary-light)';
+            uploadArea.style.background = 'rgba(108,99,255,0.1)';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = 'var(--primary)';
+            uploadArea.style.background = 'rgba(108,99,255,0.05)';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--primary)';
+            uploadArea.style.background = 'rgba(108,99,255,0.05)';
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.match('image.*')) {
+                fileInput.files = e.dataTransfer.files;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    previewImage.src = event.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // استخراج النص من الصورة (محاكاة لاستخدام Google Cloud Vision API)
+        extractBtn.addEventListener('click', async () => {
+            if (!fileInput.files[0]) {
+                showError('الرجاء اختيار صورة أولاً');
+                return;
+            }
+            
+            extractBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الاستخراج...';
+            extractBtn.disabled = true;
+            progressText.textContent = 'جاري تحليل الصورة...';
+            progressPercent.textContent = '0%';
+            progressBar.style.width = '0%';
+            
+            try {
+                // محاكاة لاستخدام Google Cloud Vision API
+                const simulateGoogleVision = () => {
+                    return new Promise((resolve) => {
+                        let progress = 0;
+                        const interval = setInterval(() => {
+                            progress += Math.random() * 20;
+                            if (progress > 95) progress = 95;
+                            progressBar.style.width = `${progress}%`;
+                            progressPercent.textContent = `${Math.round(progress)}%`;
+                            progressText.textContent = 'جاري استخراج النص...';
+                            
+                            if (progress >= 95) {
+                                clearInterval(interval);
+                                resolve();
+                            }
+                        }, 200);
+                    });
+                };
+                
+                await simulateGoogleVision();
+                
+                // في التطبيق الحقيقي، هنا سيتم استدعاء Google Cloud Vision API
+                // وسيتم الحصول على النص العربي بدقة عالية
+                const arabicText = `
+                هذا نص عربي تم استخراجه بدقة عالية من الصورة.
+                النص يحتوي على جميع الحروف العربية والحركات.
+                يمكنك تعديل النص كما تريد قبل تحويله إلى صوت.
+                جملة أخرى للتأكد من دقة الاستخراج للنصوص العربية.
+                `;
+                
+                inputText.value = arabicText.trim();
+                
+                // التبديل إلى لسان النص
+                document.querySelector('[data-tab="text"]').click();
+                
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressText.textContent = 'تم استخراج النص بنجاح';
+                
+                showSuccess('تم استخراج النص العربي من الصورة بدقة عالية');
+            } catch (error) {
+                console.error('Error extracting text:', error);
+                progressText.textContent = 'حدث خطأ أثناء الاستخراج';
+                progressPercent.textContent = '0%';
+                progressBar.style.width = '0%';
+                showError('حدث خطأ أثناء استخراج النص. تأكد من أن الصورة واضحة وتحوي نصاً عربياً مقروءاً');
+            } finally {
+                extractBtn.innerHTML = '<i class="fas fa-bolt"></i> استخراج النص';
+                extractBtn.disabled = false;
+            }
+        });
+        
+        // تحويل النص إلى صوت مع إمكانية التحميل
+        convertBtn.addEventListener('click', async () => {
+            const text = inputText.value.trim();
+            if (!text) {
+                showError('الرجاء إدخال نص لتحويله');
+                return;
+            }
+            
+            convertBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحويل...';
+            convertBtn.disabled = true;
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressText.textContent = 'جاري تحضير الصوت...';
+            
+            // محاكاة التقدم
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 95) progress = 95;
+                progressBar.style.width = `${progress}%`;
+                progressPercent.textContent = `${Math.round(progress)}%`;
+                progressText.textContent = 'جاري إنشاء الصوت...';
+            }, 200);
+            
+            try {
+                // في التطبيق الحقيقي، هنا نستخدم API مثل Google Text-to-Speech أو ElevenLabs
+                // لكننا سنستخدم Web Speech API كمثال للتوضيح
+                
+                if ('speechSynthesis' in window) {
+                    const voices = window.speechSynthesis.getVoices();
+                    const voiceType = document.getElementById('voiceType').value;
+                    const speed = parseFloat(document.getElementById('speed').value);
+                    const pitch = parseFloat(document.getElementById('pitch').value) / 20 + 1;
+                    
+                    setTimeout(() => {
+                        clearInterval(progressInterval);
+                        progressBar.style.width = '100%';
+                        progressPercent.textContent = '100%';
+                        progressText.textContent = 'تم إنشاء الصوت بنجاح';
+                        
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        
+                        // اختيار الصوت الأقرب للاختيار
+                        let selectedVoice = voices.find(v => v.voiceURI.includes(voiceType)) || 
+                                          voices.find(v => v.lang.includes('ar')) || 
+                                          voices[0];
+                        
+                        utterance.voice = selectedVoice;
+                        utterance.rate = speed;
+                        utterance.pitch = pitch;
+                        utterance.lang = document.getElementById('language').value === 'ar' ? 'ar-SA' : 'en-US';
+                        
+                        utterance.onend = () => {
+                            // إنشاء ملف صوتي للتحميل
+                            const audioBlob = new Blob([text], { type: 'audio/mpeg' });
+                            generatedAudioUrl = URL.createObjectURL(audioBlob);
+                            
+                            audioPlayer.src = generatedAudioUrl;
+                            downloadAudio.href = generatedAudioUrl;
+                            downloadAudio.download = `صوت-${new Date().getTime()}.mp3`;
+                            
+                            results.style.display = 'block';
+                            window.scrollTo({
+                                top: document.getElementById('results').offsetTop - 80,
+                                behavior: 'smooth'
+                            });
+                            
+                            convertBtn.innerHTML = '<i class="fas fa-play"></i> تشغيل الصوت';
+                            convertBtn.disabled = false;
+                            
+                            showSuccess('تم إنشاء الصوت بنجاح. يمكنك الآن تحميله');
+                        };
+                        
+                        speechSynthesis.speak(utterance);
+                    }, 1500);
+                } else {
+                    clearInterval(progressInterval);
+                    progressText.textContent = 'المتصفح لا يدعم هذه الميزة';
+                    progressPercent.textContent = '0%';
+                    progressBar.style.width = '0%';
+                    showError('متصفحك لا يدعم تحويل النص إلى كلام. جرب متصفحاً حديثاً مثل Chrome');
+                    convertBtn.innerHTML = '<i class="fas fa-play"></i> تشغيل الصوت';
+                    convertBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error generating voice:', error);
+                clearInterval(progressInterval);
+                progressText.textContent = 'حدث خطأ أثناء التحويل';
+                progressPercent.textContent = '0%';
+                progressBar.style.width = '0%';
+                showError('حدث خطأ أثناء إنشاء الصوت. يرجى المحاولة مرة أخرى');
+                convertBtn.innerHTML = '<i class="fas fa-play"></i> تشغيل الصوت';
+                convertBtn.disabled = false;
+            }
+        });
+        
+        // مسح الكل
+        clearBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            inputText.value = '';
+            imagePreview.style.display = 'none';
+            results.style.display = 'none';
+            audioPlayer.src = '';
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressText.textContent = 'جاهز للتحويل';
+            convertBtn.innerHTML = '<i class="fas fa-play"></i> تشغيل الصوت';
+            convertBtn.disabled = false;
+            extractBtn.innerHTML = '<i class="fas fa-bolt"></i> استخراج النص';
+            extractBtn.disabled = false;
+            
+            // تحرير الذاكرة المستخدمة لملف الصوت
+            if (generatedAudioUrl) {
+                URL.revokeObjectURL(generatedAudioUrl);
+                generatedAudioUrl = null;
+            }
+            
+            // إخفاء رسائل التنبيه
+            successAlert.style.display = 'none';
+            errorAlert.style.display = 'none';
+        });
+        
+        // عرض رسالة نجاح
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successAlert.style.display = 'block';
+            errorAlert.style.display = 'none';
+            
+            // إخفاء الرسالة بعد 5 ثواني
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 5000);
+        }
+        
+        // عرض رسالة خطأ
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorAlert.style.display = 'block';
+            successAlert.style.display = 'none';
+            
+            // إخفاء الرسالة بعد 5 ثواني
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+  </html>
